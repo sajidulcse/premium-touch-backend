@@ -103,6 +103,7 @@ class PortfolioController extends Controller
             $request->validate([
                 'title' => 'required|string|max:255',
                 'description' => 'nullable|string',
+                'faqs' => 'nullable|string',
                 'status' => 'required|in:published,draft',
                 'category_id' => 'nullable|exists:categories,id',
                 'sub_category_id' => 'nullable|exists:categories,id',
@@ -113,6 +114,7 @@ class PortfolioController extends Controller
             $portfolio = Portfolio::create($request->only([
                 'title',
                 'description',
+                'faqs',
                 'status',
                 'category_id',
                 'sub_category_id',
@@ -163,6 +165,7 @@ class PortfolioController extends Controller
             $request->validate([
                 'title' => 'string|max:255',
                 'description' => 'nullable|string',
+                'faqs' => 'nullable|string',
                 'status' => 'in:published,draft',
                 'category_id' => 'nullable|exists:categories,id',
                 'sub_category_id' => 'nullable|exists:categories,id',
@@ -174,6 +177,7 @@ class PortfolioController extends Controller
             $portfolio->update($request->only([
                 'title',
                 'description',
+                'faqs',
                 'status',
                 'category_id',
                 'sub_category_id',
