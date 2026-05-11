@@ -25,6 +25,13 @@ Route::apiResource('admin/categories', CategoryController::class);
 Route::get('/site-info', [SiteSettingsController::class, 'index']);
 Route::post('/site-info', [SiteSettingsController::class, 'update']); // Admin
 Route::get('/services', [ServiceController::class, 'index']);
+Route::get('/services/{id}', [ServiceController::class, 'show']);
+Route::get('/admin-services', [ServiceController::class, 'adminIndex']);
+Route::get('/admin-services/{id}', [ServiceController::class, 'adminShow']);
+Route::delete('/admin-services/images/{imageId}', [ServiceController::class, 'destroyImage']);
+Route::post('/services', [ServiceController::class, 'store']);
+Route::match(['POST', 'PUT'], '/services/{id}', [ServiceController::class, 'update']);
+Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
 Route::get('/social-links', [SocialLinkController::class, 'index']);
 
 // Project Routes
