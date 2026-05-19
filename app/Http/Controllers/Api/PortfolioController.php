@@ -68,7 +68,7 @@ class PortfolioController extends Controller
         $filename = "{$slugName}-interior-design-gallery-{$index}-{$randomString}.webp";
         $path = "portfolios/{$filename}";
 
-        $img = $manager->read($file->getRealPath());
+        $img = $manager->read(file_get_contents($file->getPathname()));
 
         // Optimization for SEO and performance
         if ($img->width() > 1920) {
