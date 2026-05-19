@@ -13,6 +13,19 @@ use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
+    /**
+     * Clean HTML description to remove formatting newlines and whitespace.
+     */
+    private function cleanDescription(?string $html): ?string
+    {
+        if (!$html) return $html;
+        $cleaned = preg_replace('/\r?\n|\r/', '', $html);
+        $cleaned = preg_replace('/>\s+</', '><', $cleaned);
+        $cleaned = preg_replace('/(<p><br><\/p>)+/', '<p><br></p>', $cleaned);
+        $cleaned = preg_replace('/^<p><br><\/p>|<p><br><\/p>$/', '', $cleaned);
+        return $cleaned;
+    }
+
     public function index(Request $request)
     {
         $query = Service::where('status', 'published')
@@ -54,7 +67,17 @@ class ServiceController extends Controller
 
     public function adminShow($id)
     {
-        return response()->json(Service::with(['images', 'thumbnail', 'subCategory'])->findOrFail($id));
+        $query = Service::with(['images', 'thumbnail', 'subCategory']);
+
+        if (is_numeric($id)) {
+            $service = $query->findOrFail($id);
+        } else {
+            $service = $query->whereHas('subCategory', function ($q) use ($id) {
+                $q->where('slug', $id);
+            })->firstOrFail();
+        }
+
+        return response()->json($service);
     }
 
     private function processAndSaveImage($file, $index)
@@ -67,7 +90,7 @@ class ServiceController extends Controller
         $filename = "service-gallery-{$index}-{$randomString}.webp";
         $path = "services/gallery/{$filename}";
 
-        $img = $manager->read($file->getRealPath());
+        $img = $manager->read(file_get_contents($file->getPathname()));
 
         // Optimization for SEO and performance
         if ($img->width() > 1920) {
@@ -97,19 +120,20 @@ class ServiceController extends Controller
             }
 
             $request->validate([
-                'description' => 'nullable|string',
+                'description' => 'required|string',
                 'faqs' => 'nullable|string',
                 'status' => 'required|in:published,draft',
-                'sub_category_id' => 'nullable|exists:categories,id',
+                'sub_category_id' => 'required|exists:categories,id',
+                'images' => 'required|array|min:1',
                 'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif,svg|max:10240'
             ]);
 
-            $service = Service::create($request->only([
-                'description',
-                'faqs',
-                'status',
-                'sub_category_id'
-            ]));
+            $data = $request->only(['description', 'faqs', 'status', 'sub_category_id']);
+            if (isset($data['description'])) {
+                $data['description'] = $this->cleanDescription($data['description']);
+            }
+
+            $service = Service::create($data);
 
             if ($request->hasFile('images')) {
                 $images = $request->file('images');
@@ -141,7 +165,14 @@ class ServiceController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $service = Service::findOrFail($id);
+            $query = Service::query();
+            if (is_numeric($id)) {
+                $service = $query->findOrFail($id);
+            } else {
+                $service = $query->whereHas('subCategory', function ($q) use ($id) {
+                    $q->where('slug', $id);
+                })->firstOrFail();
+            }
 
             if ($request->has('sub_category_id')) {
                 if ($request->input('sub_category_id') === 'null' || $request->input('sub_category_id') === '') {
@@ -150,20 +181,29 @@ class ServiceController extends Controller
             }
 
             $request->validate([
-                'description' => 'nullable|string',
+                'description' => 'required|string',
                 'faqs' => 'nullable|string',
                 'status' => 'in:published,draft',
-                'sub_category_id' => 'nullable|exists:categories,id',
+                'sub_category_id' => 'required|exists:categories,id',
                 'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif,svg|max:10240',
                 'thumbnail_id' => 'nullable|exists:service_images,id'
             ]);
 
-            $service->update($request->only([
-                'description',
-                'faqs',
-                'status',
-                'sub_category_id'
-            ]));
+            $data = $request->only(['description', 'faqs', 'status', 'sub_category_id']);
+            if (isset($data['description'])) {
+                $data['description'] = $this->cleanDescription($data['description']);
+            }
+
+            $existingImagesCount = \App\Models\ServiceImage::where('service_id', $service->id)->count();
+            $newImagesCount = $request->hasFile('images') ? count($request->file('images')) : 0;
+            if ($existingImagesCount + $newImagesCount === 0) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to update service: At least one gallery image is required.'
+                ], 422);
+            }
+
+            $service->update($data);
 
             if ($request->has('thumbnail_id')) {
                 ServiceImage::where('service_id', $service->id)->update(['is_thumbnail' => false]);
