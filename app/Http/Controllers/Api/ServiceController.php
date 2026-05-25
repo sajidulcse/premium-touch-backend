@@ -52,7 +52,7 @@ class ServiceController extends Controller
 
     public function show($id)
     {
-        $query = Service::with(['images', 'thumbnail', 'subCategory']);
+        $query = Service::where('status', 'published')->with(['images', 'thumbnail', 'subCategory']);
 
         if (is_numeric($id)) {
             $service = $query->findOrFail($id);
