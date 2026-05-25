@@ -83,3 +83,8 @@ Route::prefix('footer')->group(function () {
     Route::put('/{id}', [FooterSectionController::class, 'update']);
     Route::delete('/{id}', [FooterSectionController::class, 'destroy']);
 });
+
+// Handover Snapshots Routes
+use App\Http\Controllers\Api\HandoverSnapshotController;
+Route::apiResource('handover-snapshots', HandoverSnapshotController::class)->except(['update']);
+Route::post('handover-snapshots/{id}', [HandoverSnapshotController::class, 'update']);

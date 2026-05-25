@@ -30,28 +30,33 @@ class ProjectController extends Controller
 
         if ($request->has('area') && $request->area !== 'all') {
             $range = $request->area;
-            $query->where(function ($q) use ($range) {
-                // Ensure we only process rows that have a numeric-looking floor_area
-                $q->where('floor_area', 'regexp', '[0-9]');
-                
-                $isPlus = str_contains($range, '+');
-                // Handle the case where '+' might be a space in URL
-                if (!$isPlus && str_contains($range, ' ') && is_numeric(trim($range))) {
-                    $isPlus = true;
-                }
+            $projects = $query->latest()->get();
+            
+            $filtered = $projects->filter(function ($project) use ($range) {
+                $floorArea = $project->floor_area;
+                if (!$floorArea) return false;
 
+                // Extract all digits from floor_area string (e.g. "1,500 sft" -> 1500)
+                $numericArea = (int)preg_replace('/[^0-9]/', '', $floorArea);
+                if ($numericArea === 0) return false;
+
+                // Check for '+' plus sign (e.g. "2500+" or "2500-500000")
+                $isPlus = str_contains($range, '+') || str_contains($range, '500000');
                 if ($isPlus) {
-                    $min = (int)str_replace(['+', ' '], '', $range);
-                    $q->whereRaw("CAST(REGEXP_REPLACE(floor_area, '[^0-9]', '') AS UNSIGNED) >= ?", [$min]);
+                    $min = (int)str_replace(['+', ' ', '-500000'], '', $range);
+                    return $numericArea >= $min;
                 } else {
                     $parts = explode('-', $range);
                     if (count($parts) === 2) {
                         $min = (int)$parts[0];
                         $max = (int)$parts[1];
-                        $q->whereRaw("CAST(REGEXP_REPLACE(floor_area, '[^0-9]', '') AS UNSIGNED) BETWEEN ? AND ?", [$min, $max]);
+                        return $numericArea >= $min && $numericArea <= $max;
                     }
                 }
+                return false;
             });
+
+            return response()->json($filtered->values());
         }
 
         return response()->json($query->latest()->get());
@@ -77,7 +82,10 @@ class ProjectController extends Controller
 
     public function adminShow($id)
     {
-        return response()->json(Project::with(['images', 'thumbnail', 'category', 'subCategory', 'childCategory'])->findOrFail($id));
+        $project = is_numeric($id)
+            ? Project::with(['images', 'thumbnail', 'category', 'subCategory', 'childCategory'])->findOrFail($id)
+            : Project::with(['images', 'thumbnail', 'category', 'subCategory', 'childCategory'])->where('slug', $id)->firstOrFail();
+        return response()->json($project);
     }
 
     public function store(Request $request)
@@ -95,16 +103,17 @@ class ProjectController extends Controller
 
             $request->validate([
                 'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'location' => 'nullable|string',
-                'client_name' => 'nullable|string',
-                'completion_date' => 'nullable|date',
-                'duration' => 'nullable|string',
-                'floor_area' => 'nullable|string',
+                'description' => 'required|string',
+                'location' => 'required|string',
+                'client_name' => 'required|string',
+                'completion_date' => 'required|date',
+                'duration' => 'required|string',
+                'floor_area' => 'required|string',
                 'status' => 'required|in:published,draft',
-                'category_id' => 'nullable|exists:categories,id',
-                'sub_category_id' => 'nullable|exists:categories,id',
+                'category_id' => 'required|exists:categories,id',
+                'sub_category_id' => 'required|exists:categories,id',
                 'child_category_id' => 'nullable|exists:categories,id',
+                'images' => 'required|array|min:1',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:4096'
             ]);
 
@@ -142,7 +151,9 @@ class ProjectController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $project = Project::findOrFail($id);
+            $project = is_numeric($id)
+                ? Project::findOrFail($id)
+                : Project::where('slug', $id)->firstOrFail();
 
             // Convert empty strings or 'null' strings to real nulls before validation
             $toNull = ['category_id', 'sub_category_id', 'child_category_id', 'completion_date', 'location', 'client_name', 'duration', 'floor_area'];
@@ -155,16 +166,16 @@ class ProjectController extends Controller
             }
 
             $request->validate([
-                'title' => 'string|max:255',
-                'description' => 'nullable|string',
-                'location' => 'nullable|string',
-                'client_name' => 'nullable|string',
-                'completion_date' => 'nullable|date',
-                'duration' => 'nullable|string',
-                'floor_area' => 'nullable|string',
-                'status' => 'in:published,draft',
-                'category_id' => 'nullable|exists:categories,id',
-                'sub_category_id' => 'nullable|exists:categories,id',
+                'title' => 'required|string|max:255',
+                'description' => 'required|string',
+                'location' => 'required|string',
+                'client_name' => 'required|string',
+                'completion_date' => 'required|date',
+                'duration' => 'required|string',
+                'floor_area' => 'required|string',
+                'status' => 'required|in:published,draft',
+                'category_id' => 'required|exists:categories,id',
+                'sub_category_id' => 'required|exists:categories,id',
                 'child_category_id' => 'nullable|exists:categories,id',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:4096',
                 'thumbnail_id' => 'nullable|exists:project_images,id'
