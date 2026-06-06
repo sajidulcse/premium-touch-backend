@@ -40,7 +40,11 @@ class SiteSettingsController extends Controller
         $data = $request->only([
             'site_name', 'tagline', 'short_description', 
             'phone', 'email', 'address', 'map_url', 'map_embed_url', 
-            'facebook_page_url'
+            'facebook_page_url',
+            'stat_1_num', 'stat_1_label',
+            'stat_2_num', 'stat_2_label',
+            'stat_3_num', 'stat_3_label',
+            'stat_4_num', 'stat_4_label'
         ]);
 
         if ($request->hasFile('logo')) {
@@ -50,11 +54,18 @@ class SiteSettingsController extends Controller
             $data['logo'] = $logoName;
         }
 
-        if ($request->hasFile('project_header_bg')) {
-            $headerBg = $request->file('project_header_bg');
+        if ($request->hasFile('header_bg')) {
+            $headerBg = $request->file('header_bg');
             $headerBgName = 'project_header_' . time() . '.' . $headerBg->getClientOriginalExtension();
             $headerBg->move(public_path('uploads/header'), $headerBgName);
-            $data['project_header_bg'] = $headerBgName;
+            $data['header_bg'] = $headerBgName;
+        }
+
+        if ($request->hasFile('cta_bg')) {
+            $ctaBg = $request->file('cta_bg');
+            $ctaBgName = 'gallery_cta_' . time() . '.' . $ctaBg->getClientOriginalExtension();
+            $ctaBg->move(public_path('uploads/cta'), $ctaBgName);
+            $data['cta_bg'] = $ctaBgName;
         }
 
         $settings->fill($data);
