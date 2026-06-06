@@ -125,7 +125,11 @@ class ProjectController extends Controller
             if ($request->hasFile('images')) {
                 $images = $request->file('images');
                 foreach ($images as $index => $image) {
-                    $path = $image->store('projects', 'public');
+                    $safeImage = $this->getSafeUploadedFile($image);
+                    $path = $safeImage->store('projects', 'public');
+                    if ($safeImage !== $image) {
+                        @unlink($safeImage->getPathname());
+                    }
                     ProjectImage::create([
                         'project_id' => $project->id,
                         'image_path' => $path,
@@ -193,7 +197,11 @@ class ProjectController extends Controller
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-                    $path = $image->store('projects', 'public');
+                    $safeImage = $this->getSafeUploadedFile($image);
+                    $path = $safeImage->store('projects', 'public');
+                    if ($safeImage !== $image) {
+                        @unlink($safeImage->getPathname());
+                    }
                     ProjectImage::create([
                         'project_id' => $project->id,
                         'image_path' => $path,
@@ -241,5 +249,34 @@ class ProjectController extends Controller
         }
         
         return response()->json(['message' => 'Image deleted successfully']);
+    }
+
+    /**
+     * Get a safe UploadedFile instance, resolving potential windows temp folder realpath bugs.
+     */
+    private function getSafeUploadedFile($image)
+    {
+        if (!$image->isValid()) {
+            throw new \Exception("Image upload failed: " . $image->getErrorMessage());
+        }
+
+        if (empty($image->getRealPath())) {
+            $tempDir = storage_path('app/temp');
+            if (!file_exists($tempDir)) {
+                mkdir($tempDir, 0777, true);
+            }
+            $tempPath = $tempDir . '/' . uniqid() . '_' . $image->getClientOriginalName();
+            copy($image->getPathname(), $tempPath);
+
+            return new \Illuminate\Http\UploadedFile(
+                $tempPath,
+                $image->getClientOriginalName(),
+                $image->getClientMimeType(),
+                $image->getError(),
+                true // testMode
+            );
+        }
+
+        return $image;
     }
 }
