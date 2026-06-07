@@ -24,9 +24,12 @@ class SiteSettingsController extends Controller
                 'short_description' => 'We design elegant, functional and modern interior spaces.',
                 'phone' => '+8801000000000',
                 'email' => 'info@example.com',
+                'career_email' => 'career@premiumtouchbd.com',
                 'address' => 'Dhaka, Bangladesh',
                 'map_url' => 'https://maps.google.com',
-                'facebook_page_url' => 'https://facebook.com/premiumtouch'
+                'facebook_page_url' => 'https://facebook.com/premiumtouch',
+                'instagram_page_url' => 'https://instagram.com',
+                'linkedin_page_url' => 'https://linkedin.com'
             ]);
         }
 
@@ -38,9 +41,9 @@ class SiteSettingsController extends Controller
         $settings = SiteSetting::first() ?? new SiteSetting();
 
         $data = $request->only([
-            'site_name', 'tagline', 'short_description', 
-            'phone', 'email', 'address', 'map_url', 'map_embed_url', 
-            'facebook_page_url',
+            'site_name', 'tagline', 'short_description', 'about_page_description',
+            'phone', 'email', 'career_email', 'address', 'map_url', 'map_embed_url', 
+            'facebook_page_url', 'instagram_page_url', 'linkedin_page_url',
             'stat_1_num', 'stat_1_label',
             'stat_2_num', 'stat_2_label',
             'stat_3_num', 'stat_3_label',
@@ -66,6 +69,24 @@ class SiteSettingsController extends Controller
             $ctaBgName = 'gallery_cta_' . time() . '.' . $ctaBg->getClientOriginalExtension();
             $ctaBg->move(public_path('uploads/cta'), $ctaBgName);
             $data['cta_bg'] = $ctaBgName;
+        }
+
+        if ($request->hasFile('about_page_office_image')) {
+            // Delete previous image if exists
+            if ($settings->about_page_office_image && file_exists(public_path('uploads/about/' . $settings->about_page_office_image))) {
+                @unlink(public_path('uploads/about/' . $settings->about_page_office_image));
+            }
+            $officeImg = $request->file('about_page_office_image');
+            $officeImgName = 'about_office_' . time() . '.' . $officeImg->getClientOriginalExtension();
+            $officeImg->move(public_path('uploads/about'), $officeImgName);
+            $data['about_page_office_image'] = $officeImgName;
+        }
+
+        if ($request->input('clear_office_image') === '1') {
+            if ($settings->about_page_office_image && file_exists(public_path('uploads/about/' . $settings->about_page_office_image))) {
+                @unlink(public_path('uploads/about/' . $settings->about_page_office_image));
+            }
+            $data['about_page_office_image'] = null;
         }
 
         $settings->fill($data);

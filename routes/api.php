@@ -3,7 +3,6 @@
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\SiteSettingsController;
 use App\Http\Controllers\Api\ServiceController;
-use App\Http\Controllers\Api\SocialLinkController;
 use App\Http\Controllers\API\FooterSectionController;
 use App\Http\Controllers\Api\BlogController;
 use App\Http\Controllers\Api\CommentController;
@@ -32,7 +31,6 @@ Route::delete('/admin-services/images/{imageId}', [ServiceController::class, 'de
 Route::post('/services', [ServiceController::class, 'store']);
 Route::match(['POST', 'PUT'], '/services/{id}', [ServiceController::class, 'update']);
 Route::delete('/services/{id}', [ServiceController::class, 'destroy']);
-Route::get('/social-links', [SocialLinkController::class, 'index']);
 
 // Project Routes
 Route::get('/projects', [ProjectController::class, 'index']);
@@ -87,4 +85,13 @@ Route::prefix('footer')->group(function () {
 // Handover Snapshots Routes
 use App\Http\Controllers\Api\HandoverSnapshotController;
 Route::apiResource('handover-snapshots', HandoverSnapshotController::class)->except(['update']);
-Route::post('handover-snapshots/{id}', [HandoverSnapshotController::class, 'update']);
+Route::post('handover-snapshots/{id}', [HandoverSnapshotController::class, 'update']);
+
+// Team Members Routes
+use App\Http\Controllers\Api\TeamMemberController;
+Route::apiResource('team-members', TeamMemberController::class)->except(['update']);
+Route::post('team-members/{id}', [TeamMemberController::class, 'update']);
+
+// Career Openings Routes
+use App\Http\Controllers\Api\CareerOpeningController;
+Route::apiResource('career-openings', CareerOpeningController::class);
