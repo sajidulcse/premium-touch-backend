@@ -114,7 +114,7 @@ class ProjectController extends Controller
                 'sub_category_id' => 'required|exists:categories,id',
                 'child_category_id' => 'nullable|exists:categories,id',
                 'images' => 'required|array|min:1',
-                'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:4096'
+                'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240'
             ]);
 
             $project = Project::create($request->only([
@@ -181,7 +181,7 @@ class ProjectController extends Controller
                 'category_id' => 'required|exists:categories,id',
                 'sub_category_id' => 'required|exists:categories,id',
                 'child_category_id' => 'nullable|exists:categories,id',
-                'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:4096',
+                'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240',
                 'thumbnail_id' => 'nullable|exists:project_images,id'
             ]);
 
