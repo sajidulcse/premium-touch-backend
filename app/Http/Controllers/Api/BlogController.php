@@ -80,7 +80,7 @@ class BlogController extends Controller
             'title' => 'required|string|max:255',
             'content' => 'required',
             'status' => 'required|in:published,draft',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240'
         ]);
 
         $blog = Blog::create([
@@ -114,7 +114,7 @@ class BlogController extends Controller
                 'status' => 'in:published,draft',
                 'blog_category_id' => 'nullable|exists:blog_categories,id',
                 'content' => 'sometimes|string',
-                'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048'
+                'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240'
             ]);
 
             if ($request->has('title')) {

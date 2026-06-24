@@ -94,4 +94,26 @@ Route::post('team-members/{id}', [TeamMemberController::class, 'update']);
 
 // Career Openings Routes
 use App\Http\Controllers\Api\CareerOpeningController;
-Route::apiResource('career-openings', CareerOpeningController::class);
+Route::apiResource('career-openings', CareerOpeningController::class);
+
+// Homepage Setup Routes
+use App\Http\Controllers\Api\HomeHeroSlideController;
+use App\Http\Controllers\Api\HomeIdentityController;
+use App\Http\Controllers\Api\ProcessStepController;
+use App\Http\Controllers\Api\ClientReviewController;
+use App\Http\Controllers\Api\DesignPhilosophyController;
+
+Route::apiResource('home-hero-slides', HomeHeroSlideController::class)->except(['update']);
+Route::post('home-hero-slides/{id}', [HomeHeroSlideController::class, 'update']);
+
+Route::get('home-identity', [HomeIdentityController::class, 'index']);
+Route::post('home-identity', [HomeIdentityController::class, 'update']);
+
+Route::apiResource('process-steps', ProcessStepController::class)->except(['update']);
+Route::post('process-steps/{id}', [ProcessStepController::class, 'update']);
+
+Route::apiResource('client-reviews', ClientReviewController::class)->except(['update']);
+Route::post('client-reviews/{id}', [ClientReviewController::class, 'update']);
+
+Route::apiResource('design-philosophies', DesignPhilosophyController::class)->except(['update']);
+Route::post('design-philosophies/{id}', [DesignPhilosophyController::class, 'update']);
