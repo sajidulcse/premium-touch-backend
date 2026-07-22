@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ProcessStep;
 use Illuminate\Http\Request;
+use App\Traits\HasImageUploads;
 
 class ProcessStepController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         return response()->json(ProcessStep::all());
@@ -39,9 +41,7 @@ class ProcessStepController extends Controller
                 @unlink(storage_path('app/public/' . $step->image));
             }
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/process'), $fileName);
-            $imagePath = 'process/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'process');
         }
 
         $step->update([
@@ -78,9 +78,7 @@ class ProcessStepController extends Controller
 
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/process'), $fileName);
-            $imagePath = 'process/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'process');
         }
 
         $step = ProcessStep::create([

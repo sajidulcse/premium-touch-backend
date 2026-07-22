@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\HomeHeroSlide;
 use Illuminate\Http\Request;
+use App\Traits\HasImageUploads;
 
 class HomeHeroSlideController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         return response()->json(HomeHeroSlide::all());
@@ -34,9 +36,7 @@ class HomeHeroSlideController extends Controller
 
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/hero'), $fileName);
-            $imagePath = 'hero/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'hero');
         }
 
         $slide = HomeHeroSlide::create([
@@ -80,9 +80,7 @@ class HomeHeroSlideController extends Controller
                 @unlink(storage_path('app/public/' . $slide->image));
             }
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/hero'), $fileName);
-            $imagePath = 'hero/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'hero');
         }
 
         $slide->update([

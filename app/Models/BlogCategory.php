@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use App\Traits\LogsActivity;
 
 class BlogCategory extends Model
 {
+    use LogsActivity;
+
     protected $fillable = ['name', 'slug'];
 
     protected static function boot()

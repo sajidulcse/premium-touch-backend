@@ -7,12 +7,13 @@ use App\Models\Portfolio;
 use App\Models\PortfolioImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use App\Traits\HasImageUploads;
 use Illuminate\Support\Str;
 
 class PortfolioController extends Controller
 {
+    use HasImageUploads;
+
     public function index(Request $request)
     {
         $query = Portfolio::where('status', 'published')
@@ -59,25 +60,13 @@ class PortfolioController extends Controller
 
     private function processAndSaveImage($file, $portfolioTitle, $index)
     {
-        $manager = new ImageManager(new Driver());
-
         $slugName = Str::slug($portfolioTitle);
         $randomString = strtolower(Str::random(5));
 
         // SEO friendly descriptive file name
-        $filename = "{$slugName}-interior-design-gallery-{$index}-{$randomString}.webp";
-        $path = "portfolios/{$filename}";
+        $filename = "{$slugName}-interior-design-gallery-{$index}-{$randomString}";
 
-        $img = $manager->read(file_get_contents($file->getPathname()));
-
-        // Optimization for SEO and performance
-        if ($img->width() > 1920) {
-            $img->scale(width: 1920);
-        }
-
-        // Convert to WebP format for fast loading
-        $encoded = $img->toWebp(80);
-        Storage::disk('public')->put($path, (string) $encoded);
+        $path = $this->optimizeAndSaveImage($file, 'portfolios', $filename);
 
         // Generate descriptive alt text for SEO
         $altText = "{$portfolioTitle} interior design perspective " . ($index + 1);

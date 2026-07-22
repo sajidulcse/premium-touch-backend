@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class DesignPhilosophy extends Model
 {
+    use LogsActivity;
+
     protected $table = 'design_philosophies';
 
     protected $fillable = ['step_number', 'title', 'image', 'description'];

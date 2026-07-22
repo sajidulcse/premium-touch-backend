@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\ClientReview;
 use Illuminate\Http\Request;
+use App\Traits\HasImageUploads;
 
 class ClientReviewController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         return response()->json(ClientReview::all());
@@ -27,9 +29,7 @@ class ClientReviewController extends Controller
 
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/reviews'), $fileName);
-            $imagePath = 'reviews/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'reviews');
         }
 
         $review = ClientReview::create([
@@ -66,9 +66,7 @@ class ClientReviewController extends Controller
                 @unlink(storage_path('app/public/' . $review->image));
             }
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/reviews'), $fileName);
-            $imagePath = 'reviews/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'reviews');
         }
 
         $review->update([

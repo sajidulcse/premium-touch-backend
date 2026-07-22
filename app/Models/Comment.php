@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class Comment extends Model
 {
+    use LogsActivity;
+
     protected $fillable = [
         'blog_id', 
         'user_name', 
@@ -13,7 +16,8 @@ class Comment extends Model
         'comment', 
         'is_approved', 
         'parent_id', 
-        'is_admin_reply'
+        'is_admin_reply',
+        'is_edited'
     ];
 
     public function blog()

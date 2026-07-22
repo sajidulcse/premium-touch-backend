@@ -7,9 +7,11 @@ use App\Models\Project;
 use App\Models\ProjectImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\HasImageUploads;
 
 class ProjectController extends Controller
 {
+    use HasImageUploads;
     public function index(Request $request)
     {
         $query = Project::where('status', 'published')
@@ -125,11 +127,7 @@ class ProjectController extends Controller
             if ($request->hasFile('images')) {
                 $images = $request->file('images');
                 foreach ($images as $index => $image) {
-                    $safeImage = $this->getSafeUploadedFile($image);
-                    $path = $safeImage->store('projects', 'public');
-                    if ($safeImage !== $image) {
-                        @unlink($safeImage->getPathname());
-                    }
+                    $path = $this->optimizeAndSaveImage($image, 'projects');
                     ProjectImage::create([
                         'project_id' => $project->id,
                         'image_path' => $path,
@@ -170,16 +168,16 @@ class ProjectController extends Controller
             }
 
             $request->validate([
-                'title' => 'required|string|max:255',
-                'description' => 'required|string',
-                'location' => 'required|string',
-                'client_name' => 'required|string',
-                'completion_date' => 'required|date',
-                'duration' => 'required|string',
-                'floor_area' => 'required|string',
-                'status' => 'required|in:published,draft',
-                'category_id' => 'required|exists:categories,id',
-                'sub_category_id' => 'required|exists:categories,id',
+                'title' => 'sometimes|required|string|max:255',
+                'description' => 'sometimes|required|string',
+                'location' => 'sometimes|required|string',
+                'client_name' => 'sometimes|required|string',
+                'completion_date' => 'sometimes|required|date',
+                'duration' => 'sometimes|required|string',
+                'floor_area' => 'sometimes|required|string',
+                'status' => 'sometimes|required|in:published,draft',
+                'category_id' => 'sometimes|required|exists:categories,id',
+                'sub_category_id' => 'sometimes|required|exists:categories,id',
                 'child_category_id' => 'nullable|exists:categories,id',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240',
                 'thumbnail_id' => 'nullable|exists:project_images,id'
@@ -197,11 +195,7 @@ class ProjectController extends Controller
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-                    $safeImage = $this->getSafeUploadedFile($image);
-                    $path = $safeImage->store('projects', 'public');
-                    if ($safeImage !== $image) {
-                        @unlink($safeImage->getPathname());
-                    }
+                    $path = $this->optimizeAndSaveImage($image, 'projects');
                     ProjectImage::create([
                         'project_id' => $project->id,
                         'image_path' => $path,

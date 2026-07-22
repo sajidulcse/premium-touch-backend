@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\HomeIdentity;
 use Illuminate\Http\Request;
+use App\Traits\HasImageUploads;
 
 class HomeIdentityController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         $identity = HomeIdentity::first();
@@ -52,9 +54,7 @@ class HomeIdentityController extends Controller
                 @unlink(storage_path('app/public/' . $identity->image));
             }
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/identity'), $fileName);
-            $imagePath = 'identity/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'identity');
         }
 
         $identity->fill([
