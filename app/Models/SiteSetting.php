@@ -16,6 +16,7 @@ class SiteSetting extends Model
         'tagline',
         'logo',
         'favicon',
+        'og_image',
         'short_description',
         'about_page_description',
         'about_page_office_image',

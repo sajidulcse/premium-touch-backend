@@ -110,6 +110,16 @@ class SiteSettingsController extends Controller
             }
         }
 
+        if ($request->hasFile('og_image')) {
+            // Delete previous og_image if exists
+            if ($settings->og_image && file_exists(public_path('uploads/logo/' . $settings->og_image))) {
+                @unlink(public_path('uploads/logo/' . $settings->og_image));
+            }
+            $ogImg = $request->file('og_image');
+            $ogImgName = 'og_share_' . time();
+            $data['og_image'] = $this->optimizeAndSaveImage($ogImg, public_path('uploads/logo'), $ogImgName, 1200, 85, true);
+        }
+
         if ($request->hasFile('header_bg')) {
             // Delete previous image if exists
             if ($settings->header_bg && file_exists(public_path('uploads/header/' . $settings->header_bg))) {
