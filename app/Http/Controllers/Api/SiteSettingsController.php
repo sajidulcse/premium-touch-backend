@@ -83,6 +83,33 @@ class SiteSettingsController extends Controller
             $data['logo'] = $this->optimizeAndSaveImage($logo, public_path('uploads/logo'), $logoName, 1920, 80, true);
         }
 
+        if ($request->hasFile('favicon')) {
+            $favicon = $request->file('favicon');
+            $ext = strtolower($favicon->getClientOriginalExtension());
+
+            // Delete previous favicon if exists
+            if ($settings->favicon && file_exists(public_path('uploads/logo/' . $settings->favicon))) {
+                @unlink(public_path('uploads/logo/' . $settings->favicon));
+            }
+
+            if (in_array($ext, ['ico', 'svg'])) {
+                // Direct file upload for .ico and .svg files (GD doesn't support processing ICO/SVG)
+                $faviconName = 'favicon_' . time() . '.' . $ext;
+                $favicon->move(public_path('uploads/logo'), $faviconName);
+                $data['favicon'] = $faviconName;
+            } else {
+                try {
+                    $faviconName = 'favicon_' . time();
+                    $data['favicon'] = $this->optimizeAndSaveImage($favicon, public_path('uploads/logo'), $faviconName, 512, 80, true);
+                } catch (\Exception $e) {
+                    // Fail-safe fallback to direct file upload if GD fails
+                    $faviconName = 'favicon_' . time() . '.' . ($ext ?: 'png');
+                    $favicon->move(public_path('uploads/logo'), $faviconName);
+                    $data['favicon'] = $faviconName;
+                }
+            }
+        }
+
         if ($request->hasFile('header_bg')) {
             // Delete previous image if exists
             if ($settings->header_bg && file_exists(public_path('uploads/header/' . $settings->header_bg))) {

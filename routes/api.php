@@ -135,6 +135,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/activity-logs', [\App\Http\Controllers\Api\ActivityLogController::class, 'index'])->middleware('permission:settings.view');
         Route::get('/security-insights', [SystemSettingsController::class, 'getSecurityInsights'])->middleware('permission:settings.security');
         Route::post('/revoke-token/{id}', [SystemSettingsController::class, 'revokeToken'])->middleware('permission:settings.security');
+        Route::post('/clear-cache', [SystemSettingsController::class, 'clearCache'])->middleware('permission:settings.edit');
     });
 
     // User Management (Super Admin only)

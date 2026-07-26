@@ -451,4 +451,44 @@ class SystemSettingsController extends Controller
             'message' => 'Marketing & Analytics settings updated successfully.'
         ]);
     }
+
+    /**
+     * Clear all application, config, route, and view caches.
+     */
+    public function clearCache(Request $request)
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('cache:clear');
+            \Illuminate\Support\Facades\Artisan::call('config:clear');
+            \Illuminate\Support\Facades\Artisan::call('route:clear');
+            \Illuminate\Support\Facades\Artisan::call('view:clear');
+            \Illuminate\Support\Facades\Cache::flush();
+
+            try {
+                \App\Models\ActivityLog::create([
+                    'user_id' => auth()->id(),
+                    'action' => 'cleared_cache',
+                    'model_type' => 'SystemSetting',
+                    'model_id' => 0,
+                    'description' => 'Cleared System Cache (Cache, Config, Routes, Views)',
+                    'old_properties' => null,
+                    'new_properties' => null,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
+            } catch (\Exception $e) {
+                // Ignore log error
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All system caches (application, config, routes, views) cleared successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to clear cache: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
