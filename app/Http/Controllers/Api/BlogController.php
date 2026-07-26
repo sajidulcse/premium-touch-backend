@@ -9,9 +9,11 @@ use App\Models\BlogReaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\HasImageUploads;
 
 class BlogController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         // Only show published blogs to public
@@ -93,7 +95,7 @@ class BlogController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $path = $image->store('blogs', 'public');
+                $path = $this->optimizeAndSaveImage($image, 'blogs');
                 BlogImage::create([
                     'blog_id' => $blog->id,
                     'image_path' => $path
@@ -132,7 +134,7 @@ class BlogController extends Controller
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $image) {
-                    $path = $image->store('blogs', 'public');
+                    $path = $this->optimizeAndSaveImage($image, 'blogs');
                     BlogImage::create([
                         'blog_id' => $blog->id,
                         'image_path' => $path
@@ -226,7 +228,7 @@ class BlogController extends Controller
     public function uploadContentImage(Request $request)
     {
         if ($request->hasFile('image')) {
-            $path = $request->file('image')->store('blogs/content', 'public');
+            $path = $this->optimizeAndSaveImage($request->file('image'), 'blogs/content');
             return response()->json([
                 'url' => asset('storage/' . $path)
             ]);

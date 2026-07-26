@@ -55,6 +55,21 @@ class CommentController extends Controller
         return response()->json(['message' => 'Comment disapproved successfully']);
     }
 
+    public function update(Request $request, $id)
+    {
+        $comment = Comment::findOrFail($id);
+
+        $request->validate([
+            'comment' => 'required|string'
+        ]);
+
+        $comment->comment = $request->comment;
+        $comment->is_edited = true;
+        $comment->save();
+
+        return response()->json(['message' => 'Comment updated successfully', 'comment' => $comment]);
+    }
+
     public function destroy($id)
     {
         $comment = Comment::findOrFail($id);

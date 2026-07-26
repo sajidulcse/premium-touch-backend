@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\HandoverSnapshot;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\HasImageUploads;
 
 class HandoverSnapshotController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         return response()->json(
@@ -42,9 +44,7 @@ class HandoverSnapshotController extends Controller
 
             if ($request->hasFile('images')) {
                 foreach ($request->file('images') as $file) {
-                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $file->move(storage_path('app/public/handovers'), $fileName);
-                    $imagePath = 'handovers/' . $fileName;
+                    $imagePath = $this->optimizeAndSaveImage($file, 'handovers');
 
                     $snapshots[] = HandoverSnapshot::create([
                         'title' => $request->title,
@@ -56,9 +56,7 @@ class HandoverSnapshotController extends Controller
                 }
             } elseif ($request->hasFile('image')) {
                 $file = $request->file('image');
-                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(storage_path('app/public/handovers'), $fileName);
-                $imagePath = 'handovers/' . $fileName;
+                $imagePath = $this->optimizeAndSaveImage($file, 'handovers');
 
                 $snapshots[] = HandoverSnapshot::create([
                     'title' => $request->title,
@@ -119,9 +117,8 @@ class HandoverSnapshotController extends Controller
                         Storage::disk('public')->delete($snapshot->image_path);
                     }
                     
-                    $fileName = time() . '_' . uniqid() . '.' . $firstFile->getClientOriginalExtension();
-                    $firstFile->move(storage_path('app/public/handovers'), $fileName);
-                    $data['image_path'] = 'handovers/' . $fileName;
+                    $imagePath = $this->optimizeAndSaveImage($firstFile, 'handovers');
+                    $data['image_path'] = $imagePath;
                 } else {
                     return response()->json([
                         'status' => 'error',
@@ -139,9 +136,7 @@ class HandoverSnapshotController extends Controller
                 $position = $maxPosition + 1;
 
                 foreach ($newFiles as $file) {
-                    $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                    $file->move(storage_path('app/public/handovers'), $fileName);
-                    $imagePath = 'handovers/' . $fileName;
+                    $imagePath = $this->optimizeAndSaveImage($file, 'handovers');
 
                     $newSnapshots[] = HandoverSnapshot::create([
                         'title' => $snapshot->title,

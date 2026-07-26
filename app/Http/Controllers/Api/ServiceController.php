@@ -7,12 +7,12 @@ use App\Models\Service;
 use App\Models\ServiceImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
+use App\Traits\HasImageUploads;
 use Illuminate\Support\Str;
 
 class ServiceController extends Controller
 {
+    use HasImageUploads;
     /**
      * Clean HTML description to remove formatting newlines and whitespace.
      */
@@ -82,24 +82,12 @@ class ServiceController extends Controller
 
     private function processAndSaveImage($file, $index)
     {
-        $manager = new ImageManager(new Driver());
-
         $randomString = strtolower(Str::random(5));
 
         // SEO friendly descriptive file name
-        $filename = "service-gallery-{$index}-{$randomString}.webp";
-        $path = "services/gallery/{$filename}";
+        $filename = "service-gallery-{$index}-{$randomString}";
 
-        $img = $manager->read(file_get_contents($file->getPathname()));
-
-        // Optimization for SEO and performance
-        if ($img->width() > 1920) {
-            $img->scale(width: 1920);
-        }
-
-        // Convert to WebP format for fast loading
-        $encoded = $img->toWebp(80);
-        Storage::disk('public')->put($path, (string) $encoded);
+        $path = $this->optimizeAndSaveImage($file, 'services/gallery', $filename);
 
         // Generate descriptive alt text for SEO
         $altText = "Service perspective " . ($index + 1);
@@ -181,10 +169,10 @@ class ServiceController extends Controller
             }
 
             $request->validate([
-                'description' => 'required|string',
+                'description' => 'sometimes|required|string',
                 'faqs' => 'nullable|string',
                 'status' => 'in:published,draft',
-                'sub_category_id' => 'required|exists:categories,id',
+                'sub_category_id' => 'sometimes|required|exists:categories,id',
                 'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif,svg|max:10240',
                 'thumbnail_id' => 'nullable|exists:service_images,id'
             ]);

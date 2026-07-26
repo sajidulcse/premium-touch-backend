@@ -17,9 +17,17 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
         $this->call([
+            SiteSettingsSeeder::class,
+            CategorySeeder::class,
+            FooterSectionSeeder::class,
+            AdminSeeder::class,
+            RoleAndPermissionSeeder::class,
             ContactInfoSeeder::class,
             TeamMemberSeeder::class,
-            CareerOpeningSeeder::class
+            CareerOpeningSeeder::class,
+            FormFieldsTableSeeder::class,
+            EstimatorSeeder::class,
+            VideoSeeder::class
         ]);
         
         User::factory()->create([

@@ -1,10 +1,14 @@
 <?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\LogsActivity;
 
 class TeamMember extends Model
 {
+    use LogsActivity;
+
     protected $table = 'team_members';
 
     protected $fillable = [

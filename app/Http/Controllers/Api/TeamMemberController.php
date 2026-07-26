@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\TeamMember;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Traits\HasImageUploads;
 
 class TeamMemberController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         return response()->json(
@@ -43,9 +45,8 @@ class TeamMemberController extends Controller
 
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
-                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(storage_path('app/public/team'), $fileName);
-                $data['image'] = 'team/' . $fileName;
+                $path = $this->optimizeAndSaveImage($file, 'team');
+                $data['image'] = $path;
             }
 
             if (!$request->filled('position')) {
@@ -122,9 +123,8 @@ class TeamMemberController extends Controller
                 }
 
                 $file = $request->file('image');
-                $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-                $file->move(storage_path('app/public/team'), $fileName);
-                $data['image'] = 'team/' . $fileName;
+                $path = $this->optimizeAndSaveImage($file, 'team');
+                $data['image'] = $path;
             }
 
             $member->update($data);

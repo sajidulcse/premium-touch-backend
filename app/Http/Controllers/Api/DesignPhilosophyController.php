@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\DesignPhilosophy;
 use Illuminate\Http\Request;
+use App\Traits\HasImageUploads;
 
 class DesignPhilosophyController extends Controller
 {
+    use HasImageUploads;
     public function index()
     {
         return response()->json(DesignPhilosophy::all());
@@ -39,9 +41,7 @@ class DesignPhilosophyController extends Controller
                 @unlink(storage_path('app/public/' . $philosophy->image));
             }
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/philosophy'), $fileName);
-            $imagePath = 'philosophy/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'philosophy');
         }
 
         $philosophy->update([
@@ -78,9 +78,7 @@ class DesignPhilosophyController extends Controller
 
         if ($request->hasFile('image_file')) {
             $file = $request->file('image_file');
-            $fileName = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
-            $file->move(storage_path('app/public/philosophy'), $fileName);
-            $imagePath = 'philosophy/' . $fileName;
+            $imagePath = $this->optimizeAndSaveImage($file, 'philosophy');
         }
 
         $philosophy = DesignPhilosophy::create([

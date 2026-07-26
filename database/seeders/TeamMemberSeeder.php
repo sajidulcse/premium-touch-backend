@@ -9,6 +9,10 @@ class TeamMemberSeeder extends Seeder
 {
     public function run(): void
     {
+        if (TeamMember::count() > 0) {
+            return;
+        }
+
         // Executive 1: CEO
         TeamMember::create([
             'name' => 'Tasnim Alam Chowdhury',
