@@ -15,7 +15,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Automatically route public_path to public_html on live server if present
+        $livePublicHtml = base_path('../public_html');
+        if (file_exists($livePublicHtml) && is_dir($livePublicHtml)) {
+            $this->app->usePublicPath(realpath($livePublicHtml));
+        }
     }
 
     /**
