@@ -361,4 +361,94 @@ class SystemSettingsController extends Controller
 
         return response()->json($logs);
     }
+
+    /**
+     * Get dynamic Marketing & Analytics settings.
+     */
+    public function getMarketingSettings()
+    {
+        $settings = SystemSetting::whereIn('key', [
+            'analytics_enabled',
+            'gtm_id',
+            'meta_pixel_id',
+            'meta_capi_access_token',
+            'meta_capi_test_event_code',
+            'meta_capi_api_version'
+        ])->pluck('value', 'key')->toArray();
+
+        // Default fallbacks
+        $keys = [
+            'analytics_enabled' => '1',
+            'gtm_id' => '',
+            'meta_pixel_id' => '',
+            'meta_capi_access_token' => '',
+            'meta_capi_test_event_code' => '',
+            'meta_capi_api_version' => 'v19.0'
+        ];
+
+        foreach ($keys as $key => $default) {
+            if (!isset($settings[$key])) {
+                $settings[$key] = $default;
+            }
+        }
+
+        // Mask the access token for security
+        if (!empty($settings['meta_capi_access_token'])) {
+            $settings['meta_capi_access_token'] = '********';
+        }
+
+        return response()->json($settings);
+    }
+
+    /**
+     * Update dynamic Marketing & Analytics settings.
+     */
+    public function updateMarketingSettings(Request $request)
+    {
+        $data = $request->validate([
+            'analytics_enabled' => 'required|in:1,0,true,false',
+            'gtm_id' => 'nullable|string',
+            'meta_pixel_id' => 'nullable|string',
+            'meta_capi_access_token' => 'nullable|string',
+            'meta_capi_test_event_code' => 'nullable|string',
+            'meta_capi_api_version' => 'required|string',
+        ]);
+
+        foreach ($data as $key => $value) {
+            // If access token is masked, do not update it in the database
+            if ($key === 'meta_capi_access_token' && $value === '********') {
+                continue;
+            }
+
+            SystemSetting::updateOrCreate(
+                ['key' => $key],
+                ['value' => $value ?? '']
+            );
+        }
+
+        // Clear cache
+        \Illuminate\Support\Facades\Cache::forget('system_marketing_settings');
+        \Illuminate\Support\Facades\Cache::forget('public_marketing_settings');
+        \Illuminate\Support\Facades\Cache::forget('siteInfo');
+
+        try {
+            \App\Models\ActivityLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'model_type' => 'SystemSetting',
+                'model_id' => 0,
+                'description' => 'Updated Marketing & Analytics Configurations',
+                'old_properties' => null,
+                'new_properties' => array_merge($data, ['meta_capi_access_token' => '********']),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+        } catch (\Exception $e) {
+            logger()->error("Marketing ActivityLog error: " . $e->getMessage());
+        }
+
+        return response()->json([
+            'message' => 'Marketing & Analytics settings updated successfully.'
+        ]);
+    }
 }

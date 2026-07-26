@@ -24,15 +24,29 @@ class MetaCapiService
         array $customData = [],
         ?string $sourceUrl = null
     ): bool {
-        if (!config('analytics.enabled')) {
-            Log::info('[Meta CAPI] Analytics disabled via config.');
+        // Fetch settings from cache/database
+        $settings = \Illuminate\Support\Facades\Cache::remember('system_marketing_settings', 3600, function () {
+            return \App\Models\SystemSetting::whereIn('key', [
+                'analytics_enabled',
+                'gtm_id',
+                'meta_pixel_id',
+                'meta_capi_access_token',
+                'meta_capi_test_event_code',
+                'meta_capi_api_version'
+            ])->pluck('value', 'key')->toArray();
+        });
+
+        $isEnabled = filter_var($settings['analytics_enabled'] ?? config('analytics.enabled', true), FILTER_VALIDATE_BOOLEAN);
+
+        if (!$isEnabled) {
+            Log::info('[Meta CAPI] Analytics disabled via system configuration.');
             return false;
         }
 
-        $pixelId = config('analytics.meta.pixel_id');
-        $accessToken = config('analytics.meta.access_token');
-        $apiVersion = config('analytics.meta.api_version', 'v19.0');
-        $testEventCode = config('analytics.meta.test_event_code');
+        $pixelId = !empty($settings['meta_pixel_id']) ? $settings['meta_pixel_id'] : config('analytics.meta.pixel_id');
+        $accessToken = !empty($settings['meta_capi_access_token']) ? $settings['meta_capi_access_token'] : config('analytics.meta.access_token');
+        $apiVersion = !empty($settings['meta_capi_api_version']) ? $settings['meta_capi_api_version'] : config('analytics.meta.api_version', 'v19.0');
+        $testEventCode = !empty($settings['meta_capi_test_event_code']) ? $settings['meta_capi_test_event_code'] : config('analytics.meta.test_event_code');
 
         if (empty($pixelId) || empty($accessToken)) {
             Log::warning('[Meta CAPI] Skipped event: META_PIXEL_ID or META_CAPI_ACCESS_TOKEN not configured.');

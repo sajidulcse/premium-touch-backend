@@ -129,6 +129,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/sms/history', [SystemSettingsController::class, 'getSmsHistory'])->middleware('permission:settings.view');
         Route::post('/sms', [SystemSettingsController::class, 'updateSmsSettings'])->middleware('permission:settings.edit');
         Route::post('/sms/test', [SystemSettingsController::class, 'sendTestSms'])->middleware('permission:settings.edit');
+        Route::get('/marketing', [SystemSettingsController::class, 'getMarketingSettings'])->middleware('permission:settings.view');
+        Route::post('/marketing', [SystemSettingsController::class, 'updateMarketingSettings'])->middleware('permission:settings.edit');
         Route::get('/audit-logs', [SystemSettingsController::class, 'getAuditLogs'])->middleware('permission:settings.view');
         Route::get('/activity-logs', [\App\Http\Controllers\Api\ActivityLogController::class, 'index'])->middleware('permission:settings.view');
         Route::get('/security-insights', [SystemSettingsController::class, 'getSecurityInsights'])->middleware('permission:settings.security');

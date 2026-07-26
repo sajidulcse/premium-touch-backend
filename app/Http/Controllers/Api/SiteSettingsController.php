@@ -17,9 +17,24 @@ class SiteSettingsController extends Controller
     {
         $settings = SiteSetting::first();
 
+        // Fetch marketing settings from SystemSetting to expose to frontend safely
+        $marketingSettings = \Illuminate\Support\Facades\Cache::remember('public_marketing_settings', 3600, function () {
+            return \App\Models\SystemSetting::whereIn('key', [
+                'analytics_enabled',
+                'gtm_id',
+                'meta_pixel_id'
+            ])->pluck('value', 'key')->toArray();
+        });
+
+        $extraSettings = [
+            'analytics_enabled' => filter_var($marketingSettings['analytics_enabled'] ?? env('ANALYTICS_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
+            'gtm_id' => $marketingSettings['gtm_id'] ?? env('VITE_GTM_ID', ''),
+            'meta_pixel_id' => $marketingSettings['meta_pixel_id'] ?? env('VITE_META_PIXEL_ID', '')
+        ];
+
         // Fallback safety
         if (!$settings) {
-            return response()->json([
+            $response = [
                 'logo' => '/default-logo.jpg',
                 'site_name' => "Premium Touch\nInterior Decor Studio",
                 'tagline' => 'Interior & Architectural Design',
@@ -34,10 +49,14 @@ class SiteSettingsController extends Controller
                 'facebook_page_url' => 'https://facebook.com/premiumtouch',
                 'instagram_page_url' => 'https://instagram.com',
                 'linkedin_page_url' => 'https://linkedin.com'
-            ]);
+            ];
+        } else {
+            $response = $settings->toArray();
         }
 
-        return response()->json($settings);
+        $response = array_merge($response, $extraSettings);
+
+        return response()->json($response);
     }
 
     public function update(Request $request)
