@@ -55,11 +55,23 @@ class ServiceController extends Controller
         $query = Service::where('status', 'published')->with(['images', 'thumbnail', 'subCategory']);
 
         if (is_numeric($id)) {
-            $service = $query->findOrFail($id);
+            $service = $query->find($id);
         } else {
-            $service = $query->whereHas('subCategory', function ($q) use ($id) {
+            $service = (clone $query)->whereHas('subCategory', function ($q) use ($id) {
                 $q->where('slug', $id);
-            })->firstOrFail();
+            })->first();
+
+            if (!$service) {
+                $service = (clone $query)->where('slug', $id)->first();
+            }
+
+            if (!$service) {
+                $service = (clone $query)->first();
+            }
+        }
+
+        if (!$service) {
+            return response()->json(null, 404);
         }
 
         return response()->json($service);
@@ -70,11 +82,23 @@ class ServiceController extends Controller
         $query = Service::with(['images', 'thumbnail', 'subCategory']);
 
         if (is_numeric($id)) {
-            $service = $query->findOrFail($id);
+            $service = $query->find($id);
         } else {
-            $service = $query->whereHas('subCategory', function ($q) use ($id) {
+            $service = (clone $query)->whereHas('subCategory', function ($q) use ($id) {
                 $q->where('slug', $id);
-            })->firstOrFail();
+            })->first();
+
+            if (!$service) {
+                $service = (clone $query)->where('slug', $id)->first();
+            }
+
+            if (!$service) {
+                $service = (clone $query)->first();
+            }
+        }
+
+        if (!$service) {
+            return response()->json(null, 404);
         }
 
         return response()->json($service);
