@@ -48,10 +48,14 @@ class SiteSettingsController extends Controller
                 'map_url' => 'https://maps.google.com',
                 'facebook_page_url' => 'https://facebook.com/premiumtouch',
                 'instagram_page_url' => 'https://instagram.com',
-                'linkedin_page_url' => 'https://linkedin.com'
+                'linkedin_page_url' => 'https://linkedin.com',
+                'office_hours' => 'Sunday – Thursday: 10:00 AM – 4:00 PM'
             ];
         } else {
             $response = $settings->toArray();
+            if (empty($response['office_hours'])) {
+                $response['office_hours'] = 'Sunday – Thursday: 10:00 AM – 4:00 PM';
+            }
         }
 
         $response = array_merge($response, $extraSettings);
@@ -65,7 +69,7 @@ class SiteSettingsController extends Controller
 
         $data = $request->only([
             'site_name', 'tagline', 'short_description', 'about_page_description',
-            'phone', 'email', 'career_email', 'address', 'map_url', 'map_embed_url', 
+            'phone', 'email', 'career_email', 'address', 'office_hours', 'map_url', 'map_embed_url', 
             'facebook_page_url', 'instagram_page_url', 'linkedin_page_url',
             'stat_1_num', 'stat_1_label',
             'stat_2_num', 'stat_2_label',

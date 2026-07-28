@@ -24,6 +24,7 @@ class SiteSetting extends Model
         'email',
         'career_email',
         'address',
+        'office_hours',
         'map_embed_url',
         'map_url',
         'facebook_page_url',
